@@ -1,0 +1,165 @@
+import java.util.Arrays;
+import java.util.Random;
+
+public class SortingBenchmark {
+
+    public static void selectionSort(int[] arr) {
+        int n = arr.length;
+        for (int i = 0; i < n - 1; i++) {
+            int minIdx = i;
+            for (int j = i + 1; j < n; j++) {
+                if (arr[j] < arr[minIdx]) {
+                    minIdx = j;
+                }
+            }
+            int temp = arr[minIdx];
+            arr[minIdx] = arr[i];
+            arr[i] = temp;
+        }
+    }
+
+    public static void insertionSort(int[] arr) {
+        int n = arr.length;
+        for (int i = 1; i < n; ++i) {
+            int key = arr[i];
+            int j = i - 1;
+            while (j >= 0 && arr[j] > key) {
+                arr[j + 1] = arr[j];
+                j = j - 1;
+            }
+            arr[j + 1] = key;
+        }
+    }
+
+    public static void bubbleSort(int[] arr) {
+        int n = arr.length;
+        boolean swapped;
+        for (int i = 0; i < n - 1; i++) {
+            swapped = false;
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    int temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                    swapped = true;
+                }
+            }
+            if (!swapped) break;
+        }
+    }
+
+    public static void sortMerge(int[] arr, int l, int r) {
+        if (l < r) {
+            int m = l + (r - l) / 2;
+            sortMerge(arr, l, m);
+            sortMerge(arr, m + 1, r);
+            merge(arr, l, m, r);
+        }
+    }
+
+    private static void merge(int[] arr, int l, int m, int r) {
+        int n1 = m - l + 1;
+        int n2 = r - m;
+        int[] L = new int[n1];
+        int[] R = new int[n2];
+
+        for (int i = 0; i < n1; ++i) L[i] = arr[l + i];
+        for (int j = 0; j < n2; ++j) R[j] = arr[m + 1 + j];
+
+        int i = 0, j = 0, k = l;
+        while (i < n1 && j < n2) {
+            if (L[i] <= R[j]) {
+                arr[k++] = L[i++];
+            } else {
+                arr[k++] = R[j++];
+            }
+        }
+        while (i < n1) arr[k++] = L[i++];
+        while (j < n2) arr[k++] = R[j++];
+    }
+
+    public static void quickSort(int[] arr, int low, int high) {
+        if (low < high) {
+            int pi = partition(arr, low, high);
+            quickSort(arr, low, pi - 1);
+            quickSort(arr, pi + 1, high);
+        }
+    }
+
+    private static int partition(int[] arr, int low, int high) {
+        int pivot = arr[high];
+        int i = (low - 1);
+        for (int j = low; j < high; j++) {
+            if (arr[j] < pivot) {
+                i++;
+                int temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+            }
+        }
+        int temp = arr[i + 1];
+        arr[i + 1] = arr[high];
+        arr[high] = temp;
+        return i + 1;
+    }
+
+    public static void main(String[] args) {
+        int n = 10000; 
+        int[] originalRandom = new int[n];
+        Random rand = new Random();
+        for (int i = 0; i < n; i++) {
+            originalRandom[i] = rand.nextInt(1000000);
+        }
+
+        int[] randomArr = Arrays.copyOf(originalRandom, n);
+        int[] fullySortedArr = Arrays.copyOf(originalRandom, n);
+        Arrays.sort(fullySortedArr);
+
+        int[] reverseSortedArr = new int[n];
+        for (int i = 0; i < n; i++) {
+            reverseSortedArr[i] = fullySortedArr[n - 1 - i];
+        }
+
+        int[] partiallySortedArr = Arrays.copyOf(fullySortedArr, n);
+        for (int i = 0; i < n / 5; i++) {
+            int idx1 = rand.nextInt(n);
+            int idx2 = rand.nextInt(n);
+            int temp = partiallySortedArr[idx1];
+            partiallySortedArr[idx1] = partiallySortedArr[idx2];
+            partiallySortedArr[idx2] = temp;
+        }
+
+        System.out.println("Algorithm          | Fully Sorted | Partially Sorted | Reversely Sorted | Random");
+        System.out.println("----------------------------------------------------------------------------------");
+        
+        runTests("Selection Sort", Arrays.copyOf(randomArr, n), Arrays.copyOf(reverseSortedArr, n), Arrays.copyOf(partiallySortedArr, n), Arrays.copyOf(fullySortedArr, n), 1);
+        runTests("Insertion Sort", Arrays.copyOf(randomArr, n), Arrays.copyOf(reverseSortedArr, n), Arrays.copyOf(partiallySortedArr, n), Arrays.copyOf(fullySortedArr, n), 2);
+        runTests("Bubble Sort",    Arrays.copyOf(randomArr, n), Arrays.copyOf(reverseSortedArr, n), Arrays.copyOf(partiallySortedArr, n), Arrays.copyOf(fullySortedArr, n), 3);
+        runTests("Merge Sort",     Arrays.copyOf(randomArr, n), Arrays.copyOf(reverseSortedArr, n), Arrays.copyOf(partiallySortedArr, n), Arrays.copyOf(fullySortedArr, n), 4);
+        runTests("Quick Sort",     Arrays.copyOf(randomArr, n), Arrays.copyOf(reverseSortedArr, n), Arrays.copyOf(partiallySortedArr, n), Arrays.copyOf(fullySortedArr, n), 5);
+    }
+
+    public static void runTests(String name, int[] randArr, int[] revArr, int[] partArr, int[] fullArr, int type) {
+        long t1 = measureTime(randArr, type);
+        long t2 = measureTime(revArr, type);
+        long t3 = measureTime(partArr, type);
+        long t4 = measureTime(fullArr, type);
+
+        System.out.printf("%-18s | %10d us | %14d us | %16d us | %10d us%n", name, t4, t3, t2, t1);
+    }
+
+    public static long measureTime(int[] arr, int type) {
+        long startTime = System.nanoTime();
+        
+        switch (type) {
+            case 1: selectionSort(arr); break;
+            case 2: insertionSort(arr); break;
+            case 3: bubbleSort(arr); break;
+            case 4: sortMerge(arr, 0, arr.length - 1); break;
+            case 5: quickSort(arr, 0, arr.length - 1); break;
+        }
+        
+        long endTime = System.nanoTime();
+        return (endTime - startTime) / 1000;
+    }
+}
